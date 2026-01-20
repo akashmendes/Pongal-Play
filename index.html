@@ -1,0 +1,808 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Pongal Office Game - Scoreboard</title>
+  <style>
+    :root{
+      --bg: #0b1220;
+      --card: rgba(255,255,255,0.06);
+      --text: rgba(255,255,255,0.92);
+      --muted: rgba(255,255,255,0.55);
+      --good: #16a34a;
+      --evil: #b91c1c;
+      --evil2:#7f1d1d;
+      --line: rgba(255,255,255,0.10);
+      --shadow: 0 20px 60px rgba(0,0,0,0.35);
+    }
+
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(1200px 600px at 20% 10%, rgba(59,130,246,0.18), transparent 60%),
+                  radial-gradient(900px 500px at 80% 30%, rgba(34,197,94,0.12), transparent 55%),
+                  var(--bg);
+      color: var(--text);
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+    }
+
+    .app{
+      width:min(1100px, 100%);
+      display:grid;
+      grid-template-columns: 1.1fr 0.9fr;
+      gap:16px;
+    }
+
+    @media (max-width: 900px){
+      .app{ grid-template-columns: 1fr; }
+    }
+
+    .card{
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+
+    .header{
+      padding:14px 16px;
+      border-bottom: 1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .title{
+      font-weight: 800;
+      letter-spacing: 0.3px;
+      font-size: 16px;
+    }
+
+    .hint{
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .main{
+      padding:16px;
+      display:flex;
+      flex-direction:column;
+      gap:14px;
+    }
+
+    .timerBox{
+      border-radius: 16px;
+      padding:18px;
+      border: 1px solid var(--line);
+      background: linear-gradient(135deg, rgba(22,163,74,0.22), rgba(255,255,255,0.04));
+      position:relative;
+      overflow:hidden;
+      transition: 0.2s ease;
+    }
+
+    .timerTop{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .time{
+      font-size: 64px;
+      line-height: 1;
+      font-weight: 900;
+      letter-spacing: -2px;
+    }
+
+    .mode{
+      font-weight: 800;
+      padding:8px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.18);
+      font-size: 12px;
+      white-space:nowrap;
+    }
+
+    .sub{
+      margin-top:6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .controls{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
+
+    button{
+      cursor:pointer;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.35);
+      color: var(--text);
+      padding:10px 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      transition: 0.15s ease;
+      user-select:none;
+    }
+    button:hover{ transform: translateY(-1px); }
+    button:active{ transform: translateY(0px) scale(0.98); }
+    button.primary{
+      background: rgba(255,255,255,0.10);
+    }
+
+    .grid2{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+    }
+
+    @media (max-width: 600px){
+      .grid2{ grid-template-columns: 1fr; }
+    }
+
+    .teamCard{
+      padding:14px;
+      border-radius: 16px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.03);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+
+    .teamName{
+      font-weight: 900;
+      font-size: 16px;
+    }
+
+    .teamMeta{
+      color: var(--muted);
+      font-size: 12px;
+      margin-top:2px;
+    }
+
+    .score{
+      font-weight: 900;
+      font-size: 28px;
+      letter-spacing: -1px;
+    }
+
+    .activeBadge{
+      margin-top:8px;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size: 12px;
+      font-weight: 800;
+      padding:6px 10px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.06);
+    }
+
+    .log{
+      padding:14px 16px;
+      border-top: 1px solid var(--line);
+      max-height: 180px;
+      overflow:auto;
+    }
+
+    .logItem{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      padding:10px 0;
+      border-bottom: 1px dashed rgba(255,255,255,0.12);
+      font-size: 13px;
+    }
+    .logItem:last-child{ border-bottom:none; }
+
+    .tag{
+      font-size: 11px;
+      font-weight: 900;
+      padding:4px 8px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.25);
+      color: var(--muted);
+      white-space:nowrap;
+    }
+
+    /* Host panel */
+    .hostPanel{
+      padding:14px 16px;
+      display:none;
+      border-top: 1px solid var(--line);
+      background: rgba(0,0,0,0.22);
+    }
+    .hostPanel.show{ display:block; }
+
+    .hostRow{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-bottom:10px;
+    }
+
+    select, input{
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.35);
+      color: var(--text);
+      padding:10px 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      outline:none;
+    }
+
+    .danger{
+      background: rgba(185,28,28,0.30);
+      border-color: rgba(185,28,28,0.55);
+    }
+
+    .success{
+      background: rgba(22,163,74,0.25);
+      border-color: rgba(22,163,74,0.55);
+    }
+
+    /* Evil mode */
+    .evil body{}
+    .evilTheme .timerBox{
+      background: linear-gradient(135deg, rgba(185,28,28,0.35), rgba(0,0,0,0.35));
+      border-color: rgba(255,0,0,0.30);
+      animation: shake 0.25s infinite;
+    }
+
+    .evilTheme .mode{
+      background: rgba(185,28,28,0.35);
+      border-color: rgba(255,0,0,0.35);
+    }
+
+    .evilTheme .card{
+      border-color: rgba(255,0,0,0.18);
+      box-shadow: 0 22px 80px rgba(185,28,28,0.10), var(--shadow);
+    }
+
+    .evilTheme .title::after{
+      content:" 😈";
+    }
+
+    @keyframes shake {
+      0% { transform: translate(0px,0px); }
+      25% { transform: translate(2px,0px); }
+      50% { transform: translate(-2px,1px); }
+      75% { transform: translate(2px,-1px); }
+      100% { transform: translate(0px,0px); }
+    }
+
+    .toast{
+      margin-top:10px;
+      padding:10px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.06);
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .kbd{
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 12px;
+      padding: 2px 8px;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: rgba(0,0,0,0.35);
+      color: var(--text);
+      font-weight: 800;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app" id="appRoot">
+    <!-- LEFT: Timer + current state -->
+    <div class="card">
+      <div class="header">
+        <div>
+          <div class="title">Pongal Office Game — Scoreboard</div>
+          <div class="hint">Press <span class="kbd">H</span> to toggle Host Panel</div>
+        </div>
+        <div class="tag" id="roundTag">Round 1 (Normal)</div>
+      </div>
+
+      <div class="main">
+        <div class="timerBox" id="timerBox">
+          <div class="timerTop">
+            <div>
+              <div class="time" id="timeText">20s</div>
+              <div class="sub" id="turnText">Ven Pongal — Player 1/5</div>
+            </div>
+            <div class="mode" id="modeText">😇 SILENT MODE</div>
+          </div>
+
+          <div class="controls">
+            <button class="primary" id="startBtn">Start Turn</button>
+            <button id="pauseBtn">Pause</button>
+            <button id="resetBtn">Reset</button>
+          </div>
+
+          <div class="toast" id="toast">
+            Ready. Click <b>Start Turn</b> and watch it turn evil at 10 seconds 😈
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div class="teamCard" id="teamVen">
+            <div>
+              <div class="teamName">Ven Pongal</div>
+              <div class="teamMeta">Team 1</div>
+              <div class="activeBadge" id="activeVen" style="display:none;">🎯 Current Team</div>
+            </div>
+            <div class="score" id="scoreVen">0</div>
+          </div>
+
+          <div class="teamCard" id="teamSak">
+            <div>
+              <div class="teamName">Sakkarai Pongal</div>
+              <div class="teamMeta">Team 2</div>
+              <div class="activeBadge" id="activeSak" style="display:none;">🎯 Current Team</div>
+            </div>
+            <div class="score" id="scoreSak">0</div>
+          </div>
+
+          <div class="teamCard" id="teamNei">
+            <div>
+              <div class="teamName">Nei Pongal</div>
+              <div class="teamMeta">Team 3</div>
+              <div class="activeBadge" id="activeNei" style="display:none;">🎯 Current Team</div>
+            </div>
+            <div class="score" id="scoreNei">0</div>
+          </div>
+
+          <div class="teamCard">
+            <div>
+              <div class="teamName">Steal / Bonus</div>
+              <div class="teamMeta">Always +5</div>
+            </div>
+            <div class="score">+5</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="log" id="logBox">
+        <div class="logItem">
+          <div>Game log will appear here...</div>
+          <div class="tag">LOG</div>
+        </div>
+      </div>
+
+      <!-- Host Panel -->
+      <div class="hostPanel" id="hostPanel">
+        <div class="hostRow">
+          <select id="teamSelect">
+            <option value="Ven Pongal">Ven Pongal</option>
+            <option value="Sakkarai Pongal">Sakkarai Pongal</option>
+            <option value="Nei Pongal">Nei Pongal</option>
+          </select>
+
+          <button id="prevPlayerBtn">⬅ Prev Player</button>
+          <button id="nextPlayerBtn">Next Player ➡</button>
+        </div>
+
+        <div class="hostRow">
+          <button class="primary" id="round1Btn">Round 1 (Normal)</button>
+          <button class="primary" id="round2Btn">Round 2 (Hard)</button>
+          <div class="tag" id="pointsTag">Correct = +10</div>
+        </div>
+
+        <div class="hostRow">
+          <button class="success" id="correctBtn">✅ Correct</button>
+          <button class="primary" id="stealBtn">⚡ Steal (+5)</button>
+          <button class="danger" id="failBtn">❌ Fail (0)</button>
+          <button class="danger" id="penaltyBtn">🚫 Penalty (0)</button>
+        </div>
+
+        <div class="hostRow">
+          <button id="undoBtn">↩ Undo Last</button>
+          <button class="danger" id="resetMatchBtn">🧹 Reset Match</button>
+        </div>
+
+        <div class="hint">
+          Host Tip: Use <b>Undo</b> if you misclick (you WILL 😭)
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: Quick view panel -->
+    <div class="card">
+      <div class="header">
+        <div>
+          <div class="title">Quick View</div>
+          <div class="hint">Clean display for TV / projector</div>
+        </div>
+        <div class="tag" id="statusTag">READY</div>
+      </div>
+
+      <div class="main">
+        <div class="teamCard">
+          <div>
+            <div class="teamName">Current Team</div>
+            <div class="teamMeta" id="currentTeamText">Ven Pongal</div>
+          </div>
+          <div class="score" id="currentTeamScore">0</div>
+        </div>
+
+        <div class="teamCard">
+          <div>
+            <div class="teamName">Player Progress</div>
+            <div class="teamMeta">Current performer</div>
+          </div>
+          <div class="score" id="playerText">1/5</div>
+        </div>
+
+        <div class="teamCard">
+          <div>
+            <div class="teamName">Mode</div>
+            <div class="teamMeta">Auto changes at 10s</div>
+          </div>
+          <div class="score" id="modeMini">😇</div>
+        </div>
+
+        <div class="toast" id="miniToast">
+          Press <span class="kbd">H</span> to open Host Panel.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ====== STATE ======
+    const state = {
+      round: 1,
+      team: "Ven Pongal",
+      player: 1,
+      maxPlayers: 5,
+      scores: {
+        "Ven Pongal": 0,
+        "Sakkarai Pongal": 0,
+        "Nei Pongal": 0
+      },
+      timer: {
+        value: 20,
+        running: false,
+        intervalId: null
+      },
+      history: [] // for undo
+    };
+
+    // ====== ELEMENTS ======
+    const appRoot = document.getElementById("appRoot");
+    const hostPanel = document.getElementById("hostPanel");
+
+    const roundTag = document.getElementById("roundTag");
+    const pointsTag = document.getElementById("pointsTag");
+    const statusTag = document.getElementById("statusTag");
+
+    const timeText = document.getElementById("timeText");
+    const modeText = document.getElementById("modeText");
+    const modeMini = document.getElementById("modeMini");
+    const timerBox = document.getElementById("timerBox");
+    const toast = document.getElementById("toast");
+    const miniToast = document.getElementById("miniToast");
+
+    const turnText = document.getElementById("turnText");
+    const currentTeamText = document.getElementById("currentTeamText");
+    const playerText = document.getElementById("playerText");
+    const currentTeamScore = document.getElementById("currentTeamScore");
+
+    const scoreVen = document.getElementById("scoreVen");
+    const scoreSak = document.getElementById("scoreSak");
+    const scoreNei = document.getElementById("scoreNei");
+
+    const activeVen = document.getElementById("activeVen");
+    const activeSak = document.getElementById("activeSak");
+    const activeNei = document.getElementById("activeNei");
+
+    const logBox = document.getElementById("logBox");
+
+    // Buttons
+    const startBtn = document.getElementById("startBtn");
+    const pauseBtn = document.getElementById("pauseBtn");
+    const resetBtn = document.getElementById("resetBtn");
+
+    const teamSelect = document.getElementById("teamSelect");
+    const prevPlayerBtn = document.getElementById("prevPlayerBtn");
+    const nextPlayerBtn = document.getElementById("nextPlayerBtn");
+
+    const round1Btn = document.getElementById("round1Btn");
+    const round2Btn = document.getElementById("round2Btn");
+
+    const correctBtn = document.getElementById("correctBtn");
+    const stealBtn = document.getElementById("stealBtn");
+    const failBtn = document.getElementById("failBtn");
+    const penaltyBtn = document.getElementById("penaltyBtn");
+
+    const undoBtn = document.getElementById("undoBtn");
+    const resetMatchBtn = document.getElementById("resetMatchBtn");
+
+    // ====== HELPERS ======
+    function correctPoints(){
+      return state.round === 1 ? 10 : 15;
+    }
+
+    function isAttackMode(){
+      return state.timer.value <= 10 && state.timer.value > 0;
+    }
+
+    function setToast(msg){
+      toast.innerHTML = msg;
+      miniToast.innerHTML = msg;
+    }
+
+    function pushLog(message, tag="TURN"){
+      const time = new Date().toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+      const item = document.createElement("div");
+      item.className = "logItem";
+      item.innerHTML = `<div>${message}<div class="hint">${time}</div></div><div class="tag">${tag}</div>`;
+      logBox.prepend(item);
+    }
+
+    function updateUI(){
+      // Timer
+      timeText.textContent = state.timer.value + "s";
+
+      if(isAttackMode()){
+        modeText.textContent = "😈 ATTACK MODE";
+        modeMini.textContent = "😈";
+        appRoot.classList.add("evilTheme");
+        statusTag.textContent = "ATTACK";
+      } else {
+        modeText.textContent = "😇 SILENT MODE";
+        modeMini.textContent = "😇";
+        appRoot.classList.remove("evilTheme");
+        statusTag.textContent = state.timer.running ? "RUNNING" : "READY";
+      }
+
+      // Round
+      roundTag.textContent = state.round === 1 ? "Round 1 (Normal)" : "Round 2 (Hard)";
+      pointsTag.textContent = `Correct = +${correctPoints()}`;
+
+      // Turn text
+      turnText.textContent = `${state.team} — Player ${state.player}/${state.maxPlayers}`;
+      currentTeamText.textContent = state.team;
+      playerText.textContent = `${state.player}/${state.maxPlayers}`;
+
+      // Scores
+      scoreVen.textContent = state.scores["Ven Pongal"];
+      scoreSak.textContent = state.scores["Sakkarai Pongal"];
+      scoreNei.textContent = state.scores["Nei Pongal"];
+      currentTeamScore.textContent = state.scores[state.team];
+
+      // Active badge
+      activeVen.style.display = state.team === "Ven Pongal" ? "inline-flex" : "none";
+      activeSak.style.display = state.team === "Sakkarai Pongal" ? "inline-flex" : "none";
+      activeNei.style.display = state.team === "Nei Pongal" ? "inline-flex" : "none";
+
+      // Sync select
+      teamSelect.value = state.team;
+    }
+
+    function stopTimer(){
+      state.timer.running = false;
+      if(state.timer.intervalId) clearInterval(state.timer.intervalId);
+      state.timer.intervalId = null;
+    }
+
+    function startTimer(){
+      if(state.timer.running) return;
+      state.timer.running = true;
+
+      state.timer.intervalId = setInterval(() => {
+        if(state.timer.value <= 0){
+          stopTimer();
+          setToast("⏱️ Time up! Click Fail / Steal / Penalty.");
+          pushLog(`${state.team} | Player ${state.player}/${state.maxPlayers} — Time Up`, "TIME");
+          updateUI();
+          return;
+        }
+
+        state.timer.value -= 1;
+
+        if(state.timer.value === 10){
+          setToast("😈 ATTACK MODE ON! Other teams can distract now!");
+        }
+
+        if(state.timer.value === 5){
+          setToast("⚠️ 5 seconds left... PANIC PANIC 😭");
+        }
+
+        updateUI();
+      }, 1000);
+    }
+
+    function resetTimer(){
+      stopTimer();
+      state.timer.value = 20;
+      setToast("Ready. Click <b>Start Turn</b> and watch it turn evil at 10 seconds 😈");
+      updateUI();
+    }
+
+    function addPoints(team, points, reason){
+      // Save for undo
+      state.history.push({
+        type: "score",
+        team,
+        points,
+        before: state.scores[team],
+        after: state.scores[team] + points,
+        reason,
+        round: state.round,
+        player: state.player
+      });
+
+      state.scores[team] += points;
+      pushLog(`${team} | Player ${state.player}/${state.maxPlayers} — ${reason} (${points >= 0 ? "+" : ""}${points})`, "SCORE");
+      updateUI();
+    }
+
+    function undoLast(){
+      const last = state.history.pop();
+      if(!last){
+        setToast("Nothing to undo 😅");
+        return;
+      }
+
+      if(last.type === "score"){
+        state.scores[last.team] = last.before;
+        pushLog(`UNDO → ${last.team} reverted to ${last.before}`, "UNDO");
+      }
+
+      updateUI();
+    }
+
+    function resetMatch(){
+      stopTimer();
+      state.round = 1;
+      state.team = "Ven Pongal";
+      state.player = 1;
+      state.maxPlayers = 5;
+      state.scores["Ven Pongal"] = 0;
+      state.scores["Sakkarai Pongal"] = 0;
+      state.scores["Nei Pongal"] = 0;
+      state.timer.value = 20;
+      state.history = [];
+      logBox.innerHTML = "";
+      setToast("Match reset. Fresh start. Don't mess it up this time 😈");
+      pushLog("Match reset.", "RESET");
+      updateUI();
+    }
+
+    // ====== EVENTS ======
+    startBtn.addEventListener("click", () => {
+      setToast("Turn started. First 10 seconds = peaceful 😇");
+      startTimer();
+      updateUI();
+    });
+
+    pauseBtn.addEventListener("click", () => {
+      stopTimer();
+      setToast("Paused. Resume when you're ready 😌");
+      updateUI();
+    });
+
+    resetBtn.addEventListener("click", () => {
+      resetTimer();
+    });
+
+    teamSelect.addEventListener("change", (e) => {
+      state.team = e.target.value;
+      setToast(`Switched to ${state.team}.`);
+      updateUI();
+    });
+
+    prevPlayerBtn.addEventListener("click", () => {
+      state.player = Math.max(1, state.player - 1);
+      setToast(`Player changed → ${state.player}/${state.maxPlayers}`);
+      updateUI();
+    });
+
+    nextPlayerBtn.addEventListener("click", () => {
+      state.player = Math.min(state.maxPlayers, state.player + 1);
+      setToast(`Player changed → ${state.player}/${state.maxPlayers}`);
+      updateUI();
+    });
+
+    round1Btn.addEventListener("click", () => {
+      state.round = 1;
+      state.maxPlayers = 5;
+      state.player = Math.min(state.player, state.maxPlayers);
+      setToast("Round 1 active. Correct = +10");
+      updateUI();
+    });
+
+    round2Btn.addEventListener("click", () => {
+      state.round = 2;
+      state.maxPlayers = 3;
+      state.player = Math.min(state.player, state.maxPlayers);
+      setToast("Hard Round active 😈 Correct = +15");
+      updateUI();
+    });
+
+    correctBtn.addEventListener("click", () => {
+      stopTimer();
+      addPoints(state.team, correctPoints(), "Correct");
+      setToast("✅ Correct! Turn ended.");
+    });
+
+    stealBtn.addEventListener("click", () => {
+      stopTimer();
+      const stealTeam = prompt("Which team stole? Type: Ven / Sakkarai / Nei");
+      if(!stealTeam) return;
+
+      const map = {
+        "ven": "Ven Pongal",
+        "sakkarai": "Sakkarai Pongal",
+        "nei": "Nei Pongal"
+      };
+
+      const chosen = map[stealTeam.trim().toLowerCase()];
+      if(!chosen){
+        setToast("Invalid steal team. Type Ven / Sakkarai / Nei.");
+        return;
+      }
+
+      addPoints(chosen, 5, `Steal from ${state.team}`);
+      setToast(`⚡ Steal successful! +5 to ${chosen}`);
+    });
+
+    failBtn.addEventListener("click", () => {
+      stopTimer();
+      pushLog(`${state.team} | Player ${state.player}/${state.maxPlayers} — Fail (0)`, "FAIL");
+      setToast("❌ Fail. You can allow a steal now if needed.");
+      updateUI();
+    });
+
+    penaltyBtn.addEventListener("click", () => {
+      stopTimer();
+      pushLog(`${state.team} | Player ${state.player}/${state.maxPlayers} — Penalty (0)`, "PENALTY");
+      setToast("🚫 Penalty! 0 points. Chit goes back 😈");
+      updateUI();
+    });
+
+    undoBtn.addEventListener("click", () => {
+      undoLast();
+    });
+
+    resetMatchBtn.addEventListener("click", () => {
+      const ok = confirm("Reset match? This will wipe scores and logs.");
+      if(ok) resetMatch();
+    });
+
+    // Keyboard toggle host panel
+    window.addEventListener("keydown", (e) => {
+      if(e.key.toLowerCase() === "h"){
+        hostPanel.classList.toggle("show");
+        setToast(hostPanel.classList.contains("show")
+          ? "Host Panel OPEN 😈 (you are the boss now)"
+          : "Host Panel HIDDEN 😇 (clean display)");
+      }
+    });
+
+    // Init
+    updateUI();
+  </script>
+</body>
+</html>
